@@ -17,9 +17,9 @@ public class AuthCommandHandler {
     @Autowired
     private UserService userService;
 
-    /**
-     * Login and return JWT token
-     */
+    @Autowired
+    private JwtUtils jwtUtils;
+
     public String login(String username, String password) {
         User user = userService.findByUsername(username);
         if (user == null) {
@@ -35,6 +35,6 @@ public class AuthCommandHandler {
             throw new BizException(BizErrorCode.BIZ_ERROR, "Invalid username or password");
         }
 
-        return JwtUtils.generateToken(user.getId(), user.getUsername());
+        return jwtUtils.generateToken(user.getId(), user.getUsername());
     }
 }

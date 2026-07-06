@@ -12,11 +12,16 @@ import com.alibaba.tqn.shared.exception.BizErrorCode;
 import com.alibaba.tqn.web.WebUtils;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Slf4j
 public class SystemInterceptor implements HandlerInterceptor {
+
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -28,19 +33,19 @@ public class SystemInterceptor implements HandlerInterceptor {
             String accessToken = request.getHeader("Access-Token");
             if (accessToken == null || accessToken.isBlank()) {
                 WebUtils.writeApiResponse(response,
-                    BizResult.ofFailure(BizErrorCode.TOKEN_VALID, "Access token is required"));
+                    BizResult.ofFailure(BizErrorCode.TOKEN_INVALID, "Access token is required"));
                 return false;
             }
 
-            DecodedJWT jwt = JwtUtils.verifyToken(accessToken);
+            DecodedJWT jwt = jwtUtils.verifyToken(accessToken);
             if (jwt == null) {
                 WebUtils.writeApiResponse(response,
-                    BizResult.ofFailure(BizErrorCode.TOKEN_VALID, "Token is invalid or expired, please login again"));
+                    BizResult.ofFailure(BizErrorCode.TOKEN_INVALID, "Invalid or expired token"));
                 return false;
             }
 
-            Long userId = JwtUtils.getUserId(jwt);
-            String username = JwtUtils.getUsername(jwt);
+            Long userId = jwtUtils.getUserId(jwt);
+            String username = jwtUtils.getUsername(jwt);
 
             CurrentUser currentUser = CurrentUser.builder()
                 .id(userId)
@@ -48,10 +53,13 @@ public class SystemInterceptor implements HandlerInterceptor {
                 .build();
             AppRequestContextUtils.init(
                 AppRequestContext.builder().currentUser(currentUser).build());
+
+            MDC.put("userId", String.valueOf(userId));
+            MDC.put("username", username);
         } catch (Exception e) {
             log.error("SystemInterceptor error", e);
             WebUtils.writeApiResponse(response,
-                BizResult.ofFailure(BizErrorCode.TOKEN_VALID, "Authentication failed"));
+                BizResult.ofFailure(BizErrorCode.TOKEN_INVALID, "Authentication failed"));
             return false;
         }
         return true;
@@ -61,5 +69,7 @@ public class SystemInterceptor implements HandlerInterceptor {
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
         Object handler, Exception ex) {
         AppRequestContextUtils.clear();
+        MDC.remove("userId");
+        MDC.remove("username");
     }
 }

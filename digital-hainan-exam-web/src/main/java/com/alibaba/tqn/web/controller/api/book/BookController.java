@@ -9,7 +9,6 @@ import com.alibaba.tqn.common.command.book.BookModifyCommand;
 import com.alibaba.tqn.common.query.book.BookQuery;
 import com.alibaba.tqn.common.vo.book.BookVO;
 import com.alibaba.tqn.shared.query.Page;
-import com.alibaba.tqn.shared.result.BizResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,20 +35,17 @@ public class BookController {
     }
 
     @PostMapping("create")
-    public BizResult<Void> create(@RequestBody @Valid BookCreateCommand command) {
+    public void create(@RequestBody @Valid BookCreateCommand command) {
         commandHandler.create(command);
-        return BizResult.ofSuccess();
     }
 
     @PostMapping("modify")
-    public BizResult<Void> modify(@RequestBody @Valid BookModifyCommand command) {
+    public void modify(@RequestBody @Valid BookModifyCommand command) {
         commandHandler.modify(command);
-        return BizResult.ofSuccess();
     }
 
     @GetMapping("delete")
-    public BizResult<Void> delete(Long id) {
+    public void delete(Long id) {
         commandHandler.delete(id);
-        return BizResult.ofSuccess();
     }
 }

@@ -36,6 +36,7 @@
         <fastjson2.version>2.0.43</fastjson2.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <java-jwt.version>4.4.0</java-jwt.version>
+        <springdoc.version>2.5.0</springdoc.version>
     </properties>
 
     <dependencyManagement>
@@ -122,6 +123,13 @@
                 <groupId>com.auth0</groupId>
                 <artifactId>java-jwt</artifactId>
                 <version>${java-jwt.version}</version>
+            </dependency>
+
+            <!-- SpringDoc OpenAPI (Swagger) -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

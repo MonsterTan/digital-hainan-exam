@@ -5,7 +5,9 @@ import java.io.PrintWriter;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.tqn.shared.result.BizResult;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class WebUtils {
 
     public static void writeApiResponse(HttpServletResponse response, BizResult<?> result) {
@@ -15,7 +17,7 @@ public class WebUtils {
             writer.write(JSON.toJSONString(result));
             writer.flush();
         } catch (Exception e) {
-            // ignore
+            log.warn("Failed to write api response", e);
         }
     }
 }

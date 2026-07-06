@@ -7,55 +7,61 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-public class JwtUtils {
+@Slf4j
+@Component
+public class JwtUtils implements InitializingBean {
 
-    private static final String SECRET = "digital-hainan-exam-jwt-secret-key";
-    private static final String ISSUER = "digital-hainan-exam";
-    // Token expires in 2 hours
-    private static final long EXPIRATION_MS = 2 * 60 * 60 * 1000L;
+    @Value("${jwt.secret}")
+    private String secret;
 
-    private static final Algorithm ALGORITHM = Algorithm.HMAC256(SECRET);
-    private static final JWTVerifier VERIFIER = JWT.require(ALGORITHM)
-        .withIssuer(ISSUER)
-        .build();
+    @Value("${jwt.issuer:digital-hainan-exam}")
+    private String issuer;
 
-    /**
-     * Generate token with userId and username in claims
-     */
-    public static String generateToken(Long userId, String username) {
+    @Value("${jwt.expiration-hours:2}")
+    private int expirationHours;
+
+    private Algorithm algorithm;
+    private JWTVerifier verifier;
+
+    @Override
+    public void afterPropertiesSet() {
+        this.algorithm = Algorithm.HMAC256(secret);
+        this.verifier = JWT.require(algorithm)
+            .withIssuer(issuer)
+            .build();
+    }
+
+    public String generateToken(Long userId, String username) {
         Date now = new Date();
+        long expirationMs = (long) expirationHours * 60 * 60 * 1000;
         return JWT.create()
-            .withIssuer(ISSUER)
+            .withIssuer(issuer)
             .withSubject(String.valueOf(userId))
             .withClaim("username", username)
             .withIssuedAt(now)
-            .withExpiresAt(new Date(now.getTime() + EXPIRATION_MS))
-            .sign(ALGORITHM);
+            .withExpiresAt(new Date(now.getTime() + expirationMs))
+            .sign(algorithm);
     }
 
-    /**
-     * Verify and decode token, returns null on failure
-     */
-    public static DecodedJWT verifyToken(String token) {
+    public DecodedJWT verifyToken(String token) {
         try {
-            return VERIFIER.verify(token);
+            return verifier.verify(token);
         } catch (JWTVerificationException e) {
+            log.warn("Token verification failed: {}", e.getMessage());
             return null;
         }
     }
 
-    /**
-     * Extract userId from DecodedJWT
-     */
-    public static Long getUserId(DecodedJWT jwt) {
+    public Long getUserId(DecodedJWT jwt) {
         return Long.parseLong(jwt.getSubject());
     }
 
-    /**
-     * Extract username from DecodedJWT
-     */
-    public static String getUsername(DecodedJWT jwt) {
+    public String getUsername(DecodedJWT jwt) {
         return jwt.getClaim("username").asString();
     }
 }
